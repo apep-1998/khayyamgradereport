@@ -3,7 +3,7 @@ from telepot.loop import MessageLoop
 import requests,hashlib,time
 from bs4 import BeautifulSoup
 
-bot = telepot.Bot("547618250:AAHGogoigTHfHCL4R7REwTwFV1AZmVgluxA")
+bot = telepot.Bot("<bot token>")
 userList = []
 
 def createList():
