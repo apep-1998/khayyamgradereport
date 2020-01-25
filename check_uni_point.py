@@ -4,37 +4,34 @@ import requests
 import hashlib
 import time
 from bs4 import BeautifulSoup
+import json
 
-bot = telepot.Bot("547618250:AAHGogoigTHfHCL4R7REwTwFV1AZmVgluxA")
+bot = telepot.Bot("<bot token>")
 userList = []
+last_point = []
+start_gp = []
 
 
 def createList():
-	global userList , bot
+	global userList , bot, start_gp, last_point
 	f = open('save.dll', 'r')
 	for line in f:
 		try:
 			line = line.split(":")
 			newUser = User(line[0].strip(), line[1].strip(),
 			               int(line[2].strip()), bool(line[3].strip()))
-			bot.sendMessage(int(line[2]), '''اپدیت ورژن 
-0.42
-تغیرات:
-1.اضافه شدن قابلیت مشاهده برنامه امتحانی
-2.اضافه شدن قابلیت خروج از لیست کاربرانی که منتظر نمره جدید هستن
-3.اضافه شدن قابلیت ارسال نظر برای ادمین
-برای ارسال نظر باید از #نظر در پیام خود استفاده کنید
-توجه نظرات شما برای ادمین فوروارد میشه :| دلخوری به وجود نیارید 
-
-نظرسنجی:
-آیا به آبدیت این ربات ادامه بدم یا نع بسه دیگه؟
-
-تامام.''')
+			# bot.sendMessage(int(line[2]), '''نترس نمره ای اعلام نشده
+			# فقط آپدیت دادیم :)))
+			# تو این نسخه اگه ربات تو گروهت استارت کنی به و استادی نمره ای اعلام کنه تو گروه میگه فلان استاد ک فلان درسو میده نمراتش اعلام کرد''')
 			if newUser.isLogin():
 				userList.append(newUser)
 		except:
 			print('bad')
 	f.close()
+	with open("info.json", "r") as info:
+		temp = json.load(info)
+		last_point = temp["last_point"]
+		start_gp = temp["start_gp"]
 
 
 def static_var(varname, value):
@@ -66,6 +63,15 @@ def saveUser(username, password, teleId, status='True'):
 	f.close()
 	saveUser.into = 0
 
+def say_new_point(info):
+	text = "نمرات درس {} استاد {} اعلام شد"
+	for gp in start_gp:
+		for _ in range(3):
+			try:
+				bot.sendMessage(gp, text.format(*info))
+				break
+			except:
+				pass
 
 class User:
 	def __init__(self, username, password, teleId, flagCheck=True):
@@ -121,7 +127,7 @@ class User:
 		return m.hexdigest()
 
 	def parserGrade(self, text):
-		global bot
+		global bot, last_point, start_gp
 		try:
 			soup = BeautifulSoup(text, "html.parser")
 			rows = soup.findAll('tr')
@@ -132,6 +138,14 @@ class User:
 					output += col[2].get_text() + "-" + col[5].get_text() + '-' + \
                                             col[6].get_text() + '-' + \
                                             col[8].get_text() + "\n"
+					print(last_point)
+					if col[6].get_text() == 'عادی' and self.MD5(col[2].get_text()+col[4].get_text()) not in last_point:
+						last_point.append(self.MD5(col[2].get_text()+col[4].get_text()))
+						say_new_point((col[2].get_text(), col[4].get_text()))
+						with open("info.json", "w") as info:
+							temp = {"last_point": last_point, "start_gp": start_gp}
+							json.dump(temp, info)
+
 				elif len(col) == 7:
 					output += col[2].get_text() + '-' + col[5].get_text() + \
                                             '-' + col[6].get_text() + '\n'
@@ -204,9 +218,9 @@ class User:
 
 
 def newMessage(msg):
-	global userList
+	global userList, last_point, start_gp
 	try:
-		if(':' in msg['text']):
+		if(':' in msg['text'] and msg['chat']["id"] > 0):
 			text = msg['text'].split(':')
 			username = text[0].strip()
 			password = text[1].strip()
@@ -221,26 +235,34 @@ def newMessage(msg):
 				bot.sendMessage(msg['chat']['id'], 'شما با موفقیت وارد شدید')
 			else:
 				bot.sendMessage(msg['chat']['id'], 'یوزر نیم یا پسورد شما اشتباه است')
-		elif('/nowgrade' in msg['text']):
+		elif('/nowgrade' in msg['text'] and msg['chat']["id"] > 0):
 			for user in userList:
 				if user.teleId == msg['chat']['id']:
 					user.parserGrade(user.openGradePage())
-		elif('/exit' in msg['text']):
+		elif('/exit' in msg['text'] and msg['chat']["id"] > 0):
 			for user in userList:
 				if user.teleId == msg['chat']['id']:
 					user.flagcheck = False
 					saveUser(user.username, user.password, user.teleId, 'False')
 					bot.sendMessage(msg['chat']['id'], 'ok shod :(D')
-		elif('#نظر' in msg['text']):
+		elif('#نظر' in msg['text'] and msg['chat']["id"] > 0):
 				bot.forwardMessage(518323244, msg['chat']['id'], msg['message_id'])
 				bot.sendMessage(msg['chat']['id'], 'اوکی بهش گفتم ;)')
-		elif('/examdays' in msg['text']):
+		elif('/examdays' in msg['text'] and msg['chat']["id"] > 0):
 				for user in userList:
 					if(user.teleId == msg['chat']['id']):
 						user.parserExamDays(user.openExamDaysPage())
 		else:
-			bot.sendMessage(
-				msg['chat']['id'], 'username : password .برای استفاده از برنامه باید یوزر پسورد پرتال خود را به صورت زیر وارد کنید')
+			if '/start' in msg['text']:
+				if msg["chat"]["id"] < 0:
+					start_gp.append(msg["chat"]["id"])
+					bot.sendMessage(msg["chat"]["id"], "ok :)")
+					with open("info.json", "w") as info:
+						temp = {"last_point": last_point, "start_gp": start_gp}
+						json.dump(temp, info)
+				else:
+					bot.sendMessage(
+						msg['chat']['id'], 'username : password .برای استفاده از برنامه باید یوزر پسورد پرتال خود را به صورت زیر وارد کنید')
 	except Exception as e:
 		print(e)
 
@@ -248,8 +270,7 @@ def newMessage(msg):
 createList()
 
 MessageLoop(bot, newMessage).run_as_thread()
-
 while True:
 	for user in userList:
 		user.start()
-	time.sleep(60*5)
+	time.sleep(60*15)
