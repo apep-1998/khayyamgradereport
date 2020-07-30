@@ -5,11 +5,25 @@ import hashlib
 import time
 from bs4 import BeautifulSoup
 import json
+from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 
 bot = telepot.Bot("<bot token>")
 userList = []
 last_point = []
 start_gp = []
+
+
+
+
+def create_keyboard(pattern):
+	key_pattern = []
+	for line_keys in pattern:
+		line_keyboard = []
+		for button in line_keys:
+			text, val = button
+			line_keyboard.append(InlineKeyboardButton(text=text, callback_data=val))
+		key_pattern.append(line_keyboard)
+	return InlineKeyboardMarkup(inline_keyboard=key_pattern)
 
 
 def createList():
@@ -20,9 +34,13 @@ def createList():
 			line = line.split(":")
 			newUser = User(line[0].strip(), line[1].strip(),
 			               int(line[2].strip()), bool(line[3].strip()))
-			# bot.sendMessage(int(line[2]), '''نترس نمره ای اعلام نشده
-			# فقط آپدیت دادیم :)))
-			# تو این نسخه اگه ربات تو گروهت استارت کنی به و استادی نمره ای اعلام کنه تو گروه میگه فلان استاد ک فلان درسو میده نمراتش اعلام کرد''')
+			bot.sendMessage(int(line[2]), '''\
+نترس نمره ای اعلام نشده
+فقط آپدیت دادیم :)))
+نمایش انمرات و برنامه امتحانی زیبا تر شده 
+برای مشاهده از دستورای زیر استفاده کن
+/nowgrade
+/examdays''')
 			if newUser.isLogin():
 				userList.append(newUser)
 		except:
@@ -132,13 +150,11 @@ class User:
 			soup = BeautifulSoup(text, "html.parser")
 			rows = soup.findAll('tr')
 			output = ""
+			grades = []
 			for row in rows:
 				col = row.findAll('td')
-				if len(col) == 11:
-					output += col[2].get_text() + "-" + col[5].get_text() + '-' + \
-                                            col[6].get_text() + '-' + \
-                                            col[8].get_text() + "\n"
-					print(last_point)
+				if len(col) == 11 or len(col) == 7:
+					grades.append([[col[5].get_text(), "0"], [col[2].get_text(), "0"]])
 					if col[6].get_text() == 'عادی' and self.MD5(col[2].get_text()+col[4].get_text()) not in last_point:
 						last_point.append(self.MD5(col[2].get_text()+col[4].get_text()))
 						say_new_point((col[2].get_text(), col[4].get_text()))
@@ -146,12 +162,10 @@ class User:
 							temp = {"last_point": last_point, "start_gp": start_gp}
 							json.dump(temp, info)
 
-				elif len(col) == 7:
-					output += col[2].get_text() + '-' + col[5].get_text() + \
-                                            '-' + col[6].get_text() + '\n'
 				elif len(col) == 5:
-					output += col[2].get_text() + "-" + col[3].get_text() + "\n"
-			bot.sendMessage(self.teleId, output)
+					grades.append([[col[3].get_text(), "0"], [col[2].get_text(), "0"]])
+					# output += col[2].get_text() + "-" + col[3].get_text() + "\n"
+			bot.sendMessage(self.teleId, "نمرات شما در حال حاضر به شرح زیر است.", reply_markup=create_keyboard(grades))
 		except Exception as e:
 			print(e)
 
@@ -160,14 +174,13 @@ class User:
 		try:
 			soup = BeautifulSoup(text, "html.parser")
 			rows = soup.findAll('tr')
-			output = "نام درس-ساعت-تاریخ-مکان\n"
+			exams = [[["تاریخ", "0"], ["ساعت", "0"], ["نام درس", "0"]]]
+			# output = "نام درس-ساعت-تاریخ-مکان\n"
 			for row in rows:
 				col = row.findAll('td')
 				if len(col) == 9:
-					output += col[2].get_text() + "-" + col[5].get_text() + '-' + \
-                                            col[6].get_text() + '-' + \
-                                            col[7].get_text() + "\n"
-			bot.sendMessage(self.teleId, output)
+					exams.append([[col[6].get_text(), "0"], [col[5].get_text(), "0"], [col[2].get_text(), "0"]])
+			bot.sendMessage(self.teleId, "ساعت و تاریخ امتحانات این ترم شما به شرح زیر است.", reply_markup=create_keyboard(exams))
 		except Exception as e:
 			print(e)
 
