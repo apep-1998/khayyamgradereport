@@ -37,8 +37,8 @@ def new_message(msg):
     elif '/examdays' == text:
         BotUser.send_user_exams_time(user_id)
     
-    elif '#نظر' in text and Variable.admin_telegram_id is not None:
-        BotUser.bot.sendMessage(Variable.admin_telegram_id, text)
+    elif '#نظر' in text and Variables.admin_telegram_id is not None:
+        BotUser.bot.sendMessage(Variables.admin_telegram_id, text)
         BotUser.get_user(user_id).send_message(successful_feed_back)
     
     elif '/start' == text or '/info' == text:
@@ -47,13 +47,13 @@ def new_message(msg):
     elif '/aboutme' == text:
         BotUser.bot.sendMessage(user_id, info_message)
     
-    elif "#send_all" in text and user_id == Variable.admin_telegram_id:
+    elif "#send_all" in text and user_id == Variables.admin_telegram_id:
         text = text.replace("#send_all", '')
         BotUser.broadcast_message(text)
     
     elif text == admin_password:
-        Variable.admin_telegram_id = user_id
-        BotUser.bot.sendMessage(Variable.admin_telegram_id, successful_admin)
+        Variables.admin_telegram_id = user_id
+        BotUser.bot.sendMessage(Variables.admin_telegram_id, successful_admin)
 
 MessageLoop(BotUser.bot, new_message).run_as_thread()
 BotUser.load_saved_user()
