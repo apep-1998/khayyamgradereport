@@ -36,13 +36,20 @@ class BotUser(User):
     def send_user_grades(cls, telegram_id):
         for user in cls.users:
             if user.telegram_id == telegram_id:
-                user.send_grade()
+                try:
+                    user.send_grade()
+                except Exception as e:
+                    print(e)
+                    
 
     @classmethod
     def send_user_exams_time(cls, telegram_id):
         for user in cls.users:
             if user.telegram_id == telegram_id:
-                user.send_exams_time()
+                try:
+                    user.send_exams_time()
+                except Exception as e:
+                    print(e)
     
     @classmethod
     def get_user(cls, telegram_id):
@@ -64,7 +71,10 @@ class BotUser(User):
     @classmethod
     def check_users_grade(cls):
         for user in cls.users:
-            user.check_for_new_grade()
+            try:
+                user.check_for_new_grade()
+            except Exception as e:
+                print(e)
     
     @classmethod
     def broadcast_message(cls, message):
