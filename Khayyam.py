@@ -10,6 +10,7 @@
 from Tools import make_md5
 from bs4 import BeautifulSoup
 import requests
+import time
 
 
 class User(object):
