@@ -16,6 +16,7 @@ import time
 import json
 
 BotUser.bot = telepot.Bot(bot_token)
+MessageLoop(BotUser.bot, new_message).run_as_thread()
 BotUser.load_saved_user()
 
 
@@ -58,8 +59,7 @@ def new_message(msg):
         BotUser.bot.sendMessage(Variable.admin_telegram_id, successful_admin)
 
 
-MessageLoop(BotUser.bot, new_message).run_as_thread()
-while True:	
+while True:
     print("check for new grade")
     BotUser.check_users_grade()
     time.sleep(60*15)
