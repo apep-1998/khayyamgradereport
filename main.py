@@ -9,16 +9,13 @@
 
 from telepot.loop import MessageLoop
 from BotUser import BotUser
-from Variable import *
+from Variables import *
 import Variables
 import telepot
 import time
 import json
 
 BotUser.bot = telepot.Bot(bot_token)
-MessageLoop(BotUser.bot, new_message).run_as_thread()
-BotUser.load_saved_user()
-
 
 def new_message(msg):
     text = msg["text"]
@@ -58,6 +55,8 @@ def new_message(msg):
         Variable.admin_telegram_id = user_id
         BotUser.bot.sendMessage(Variable.admin_telegram_id, successful_admin)
 
+MessageLoop(BotUser.bot, new_message).run_as_thread()
+BotUser.load_saved_user()
 
 while True:
     print("check for new grade")
